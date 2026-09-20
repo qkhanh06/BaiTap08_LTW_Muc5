@@ -1,0 +1,23 @@
+-- Anh minh hoa cho du lieu mau; khong ghi de anh nguoi dung da chon.
+SET NAMES utf8mb4;
+USE springboot_api;
+START TRANSACTION;
+UPDATE products SET images = '/images/products/sample-1.webp' WHERE product_name = 'Điện thoại Nova Mini' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-2.webp' WHERE product_name = 'Điện thoại Nova Plus' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-3.webp' WHERE product_name = 'Điện thoại Nova Pro' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-4.webp' WHERE product_name = 'Laptop Horizon Office' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-5.webp' WHERE product_name = 'Laptop Horizon Study' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-6.webp' WHERE product_name = 'Laptop Horizon Gaming' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-7.webp' WHERE product_name = 'Máy tính bảng Luna Mini' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-8.webp' WHERE product_name = 'Máy tính bảng Luna Air' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-9.webp' WHERE product_name = 'Máy tính bảng Luna Pro' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-10.webp' WHERE product_name = 'Tai nghe Echo Basic' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-11.webp' WHERE product_name = 'Tai nghe Echo Wireless' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-12.webp' WHERE product_name = 'Tai nghe Echo Studio' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-13.jpg' WHERE product_name = 'Chuột không dây Swift' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-14.jpg' WHERE product_name = 'Bàn phím cơ Swift' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-15.webp' WHERE product_name = 'Sạc nhanh Swift 65W' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-16.jpg' WHERE product_name = 'Màn hình Vision 24 inch' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-17.jpg' WHERE product_name = 'Màn hình Vision 27 inch' AND (images IS NULL OR images = '');
+UPDATE products SET images = '/images/products/sample-18.jpg' WHERE product_name = 'Màn hình Vision 32 inch' AND (images IS NULL OR images = '');
+COMMIT;

@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Danh mục và sản phẩm GraphQL</title><link rel="stylesheet" th:href="@{/css/catalog.css}"></head>
+<body th:attr="data-endpoint=@{/graphql}"><nav><a th:href="@{/home}">Trang chủ</a><a th:href="@{/graphql/categories}">Danh mục GraphQL</a><a th:href="@{/graphql/products}">Sản phẩm GraphQL</a><a th:href="@{/admin/categories}">REST phần 4</a><a th:href="@{/graphiql}">GraphiQL</a></nav>
+<main><p id="message" role="status" aria-live="polite"></p><section id="catalog" data-mode="home"><h1>Sản phẩm — giá từ thấp đến cao</h1><label>Lọc theo danh mục <select id="category-filter"><option value="">Tất cả danh mục</option></select></label><p id="result-count"></p><div id="cards" class="cards"></div></section></main><script th:src="@{/js/catalog.js}" defer></script></body></html>

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="vi"><meta charset="UTF-8"><title>GraphQL browser smoke test</title>
+<body><pre id="result">RUNNING</pre><iframe id="app" style="width:1100px;height:800px"></iframe>
+<script>
+(async () => {
+    const result = document.getElementById('result');
+    const frame = document.getElementById('app');
+    const names = 'Browser-' + Date.now();
+    let categoryId, secondCategoryId;
+    const productIds = [];
+    const checks = [];
+    const assert = (condition, message) => { if (!condition) throw new Error(message); checks.push(message); };
+    async function gql(query, variables = {}) {
+        const response = await fetch('/graphql', {method:'POST', headers:{'Content-Type':'application/json'},body:JSON.stringify({query,variables})});
+        const json = await response.json();
+        if (json.errors) throw new Error(JSON.stringify(json.errors));
+        return json.data;
+    }
+    const doc = () => frame.contentDocument;
+    const wait = predicate => new Promise((resolve,reject) => {
+        const started = Date.now();
+        const timer = setInterval(() => {
+            if (predicate()) { clearInterval(timer); resolve(); }
+            else if (Date.now()-started > 10000) { clearInterval(timer); reject(new Error('Timeout: '+doc().body.innerText)); }
+        }, 30);
+    });
+    async function open(path) {
+        await new Promise(resolve => { frame.onload=resolve; frame.src=path; });
+        await wait(() => doc().getElementById('message') && doc().getElementById('message').textContent !== 'Đang tải...');
+    }
+    function fill(fields) {
+        const form = doc().getElementById('editor');
+        Object.entries(fields).forEach(([key,value]) => form.elements.namedItem(key).value=value);
+        form.requestSubmit();
+    }
+    try {
+        await open('/graphql/categories');
+        fill({categoryName:names,icon:'demo.png'});
+        await wait(() => doc().getElementById('rows').textContent.includes(names));
+        assert(true,'Category AJAX create');
+        categoryId = (await gql('query($name:String){categories(keyword:$name){content{categoryId}}}',{name:names})).categories.content[0].categoryId;
+        secondCategoryId = (await gql('mutation($name:String!){createCategory(input:{categoryName:$name}){categoryId}}',{name:names+'-Other'})).createCategory.categoryId;
+        await open('/graphql/products');
+        await wait(() => doc().querySelector('select[name=categoryId] option[value="'+categoryId+'"]'));
+        for (const [suffix,price] of [['High',900],['Low',100],['Middle',500]]) {
+            fill({productName:names+suffix,categoryId,unitPrice:price,quantity:2,description:'Browser test',discount:0,status:1});
+            await wait(() => doc().getElementById('rows').textContent.includes(names+suffix) && !doc().getElementById('save').disabled);
+        }
+        const saved = (await gql('query($name:String){products(keyword:$name){content{productId}}}',{name:names})).products.content;
+        productIds.push(...saved.map(p=>p.productId));
+        assert(saved.length===3,'Product AJAX create');
+        doc().getElementById('keyword').value=names;
+        doc().getElementById('size').add(new Option('1','1'));
+        doc().getElementById('size').value='1';
+        doc().getElementById('search-form').requestSubmit();
+        await wait(() => doc().getElementById('page-info').textContent.includes('1/3'));
+        assert(doc().querySelectorAll('#rows tr').length===1,'Product search and page size');
+        doc().getElementById('next').click();
+        await wait(() => doc().getElementById('page-info').textContent.includes('2/3'));
+        assert(true,'Product next page');
+        doc().querySelector('#rows button').click();
+        fill({unitPrice:50,categoryId:secondCategoryId});
+        await wait(() => doc().getElementById('editor').elements.namedItem('id').value==='' && !doc().getElementById('save').disabled);
+        assert(true,'Product AJAX update');
+        await open('/home');
+        await wait(() => doc().querySelector('#category-filter option[value="'+categoryId+'"]'));
+        const filter = doc().getElementById('category-filter');
+        filter.value=categoryId; filter.dispatchEvent(new frame.contentWindow.Event('change'));
+        await wait(() => doc().getElementById('result-count').textContent==='2 sản phẩm');
+        const titles = [...doc().querySelectorAll('.card h2')].map(node=>node.textContent);
+        assert(titles[0]===names+'Middle' && titles[1]===names+'High','Home category filter and ascending prices');
+        filter.value=secondCategoryId; filter.dispatchEvent(new frame.contentWindow.Event('change'));
+        await wait(() => doc().getElementById('result-count').textContent==='1 sản phẩm');
+        assert(doc().querySelector('.card h2').textContent===names+'Low','Product category update visible on home');
+        await open('/graphql/categories');
+        doc().getElementById('keyword').value=names;
+        doc().getElementById('search-form').requestSubmit();
+        await wait(() => doc().querySelectorAll('#rows tr').length===2);
+        const row = [...doc().querySelectorAll('#rows tr')].find(row=>row.children[0].textContent===categoryId);
+        frame.contentWindow.confirm=()=>true;
+        row.querySelectorAll('button')[1].click();
+        await wait(() => doc().getElementById('message').textContent.includes('Danh mục còn sản phẩm'));
+        assert(true,'Category delete blocked while products exist');
+        row.querySelector('button').click();
+        fill({categoryName:names+'-Edited'});
+        await wait(() => doc().getElementById('rows').textContent.includes(names+'-Edited'));
+        assert(true,'Category AJAX update');
+        await open('/graphql/products');
+        doc().getElementById('keyword').value=names;
+        doc().getElementById('search-form').requestSubmit();
+        await wait(() => doc().querySelectorAll('#rows tr').length===3);
+        frame.contentWindow.confirm=()=>true;
+        doc().querySelectorAll('#rows tr button')[1].click();
+        await wait(() => doc().querySelectorAll('#rows tr').length===2);
+        assert(true,'Product AJAX delete');
+        const remaining = (await gql('query($name:String){products(keyword:$name){content{productId}}}',{name:names})).products.content;
+        for (const item of remaining) await gql('mutation($id:ID!){deleteProduct(id:$id)}',{id:item.productId});
+        await open('/graphql/categories');
+        doc().getElementById('keyword').value=names;
+        doc().getElementById('search-form').requestSubmit();
+        await wait(() => doc().querySelectorAll('#rows tr').length===2);
+        frame.contentWindow.confirm=()=>true;
+        doc().querySelectorAll('#rows tr button')[1].click();
+        await wait(() => doc().querySelectorAll('#rows tr').length===1);
+        assert(true,'Category AJAX delete');
+        result.textContent='PASS\n'+checks.join('\n');
+    } catch(error) { result.textContent='FAIL\n'+error.stack+'\n'+checks.join('\n'); }
+})();
+</script></body></html>
+

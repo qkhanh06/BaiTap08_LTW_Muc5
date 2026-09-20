@@ -1,0 +1,7 @@
+/target/
+/uploads/
+/.vscode/
+/.github/modernize/
+src/main/resources/application-local.properties
+*.log
+.tools/
